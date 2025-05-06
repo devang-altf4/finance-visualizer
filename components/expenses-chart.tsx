@@ -1,8 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import type { Transaction } from "@/lib/types"
 
 interface ExpensesChartProps {
@@ -53,21 +52,43 @@ export default function ExpensesChart({ transactions }: ExpensesChartProps) {
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-[300px] md:h-full">
       {chartData.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 text-center h-full">
           <p className="text-sm text-muted-foreground">No transaction data available to display chart.</p>
         </div>
       ) : (
-        <ChartContainer config={chartConfig} className="h-full">
-          <BarChart accessibilityLayer data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} />
-            <YAxis tickFormatter={(value) => `$${value}`} tickLine={false} axisLine={false} tickMargin={10} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(value) => `$${value}`} />} />
-            <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} barSize={40} />
-          </BarChart>
-        </ChartContainer>
+        <div className="h-full w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12 }}
+                tickMargin={10}
+              />
+              <YAxis
+                tickFormatter={(value) => `$${value}`}
+                tick={{ fontSize: 12 }}
+                tickMargin={10}
+              />
+              <Tooltip
+                formatter={(value) => [`$${value}`, "Amount"]}
+                labelStyle={{ fontSize: 12 }}
+                contentStyle={{ fontSize: 12 }}
+              />
+              <Bar
+                dataKey="amount"
+                fill="#f47560"
+                radius={[4, 4, 0, 0]}
+                barSize={25}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   )
