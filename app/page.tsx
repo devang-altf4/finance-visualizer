@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,53 +10,80 @@ import ExpensesChart from "@/components/expenses-chart"
 import type { Transaction } from "@/lib/types"
 
 export default function Home() {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: "1",
-      amount: 120.5,
-      date: new Date("2023-05-01"),
-      description: "Grocery shopping",
-    },
-    {
-      id: "2",
-      amount: 45.0,
-      date: new Date("2023-05-03"),
-      description: "Gas station",
-    },
-    {
-      id: "3",
-      amount: 200.0,
-      date: new Date("2023-05-10"),
-      description: "Electricity bill",
-    },
-    {
-      id: "4",
-      amount: 35.99,
-      date: new Date("2023-05-15"),
-      description: "Online subscription",
-    },
-    {
-      id: "5",
-      amount: 80.0,
-      date: new Date("2023-06-01"),
-      description: "Phone bill",
-    },
-  ])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
 
-  const handleAddTransaction = (transaction: Transaction) => {
-    setTransactions([...transactions, transaction])
-    setIsFormOpen(false)
-  }
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch('/api/transactions')
+        const data = await response.json()
+        const sanitizedTransactions = data.transactions.map((t: Transaction) => ({
+          ...t,
+          date: t.date && !isNaN(new Date(t.date).getTime()) ? new Date(t.date) : null, // Ensure valid date or null
+          amount: t.amount !== undefined && t.amount !== null ? parseFloat(t.amount.toString()) : 0, // Ensure valid amount
+        }))
+        setTransactions(sanitizedTransactions)
+      } catch (error) {
+        console.error('Error fetching transactions:', error)
+      }
+    }
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setTransactions(transactions.map((t) => (t.id === transaction.id ? transaction : t)))
+    fetchTransactions()
+  }, [])
+
+  const handleTransactionSubmit = (transaction: Transaction) => {
+    const sanitizedTransaction = {
+      ...transaction,
+      date: transaction.date && !isNaN(new Date(transaction.date).getTime()) ? new Date(transaction.date) : new Date(), // Ensure valid date
+      amount: transaction.amount !== undefined && transaction.amount !== null ? parseFloat(transaction.amount.toString()) : 0, // Ensure valid amount
+    }
+
+    setTransactions(prev => {
+      const index = prev.findIndex(t => t.id === sanitizedTransaction.id)
+      if (index >= 0) {
+        // Update existing transaction
+        const updated = [...prev]
+        updated[index] = sanitizedTransaction
+        return updated
+      }
+      // Add new transaction
+      return [...prev, sanitizedTransaction]
+    })
+    setIsFormOpen(false)
     setEditingTransaction(null)
   }
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id))
+  const handleEditTransaction = async (transaction: Transaction) => {
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+      })
+
+      if (!response.ok) throw new Error('Failed to update transaction')
+
+      setTransactions(transactions.map((t) => (t.id === transaction.id ? transaction : t)))
+      setEditingTransaction(null)
+    } catch (error) {
+      console.error('Error updating transaction:', error)
+    }
+  }
+
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Failed to delete transaction')
+
+      setTransactions(transactions.filter((t) => t.id !== id))
+    } catch (error) {
+      console.error('Error deleting transaction:', error)
+    }
   }
 
   const openEditForm = (transaction: Transaction) => {
@@ -99,7 +126,7 @@ export default function Home() {
 
       {(isFormOpen || editingTransaction) && (
         <TransactionForm
-          onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
+          onSubmit={handleTransactionSubmit}
           onCancel={() => {
             setIsFormOpen(false)
             setEditingTransaction(null)

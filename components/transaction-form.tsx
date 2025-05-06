@@ -29,6 +29,7 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
     date: "",
     description: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (transaction) {
@@ -65,21 +66,52 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
     return valid
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    if (!validateForm() || isSubmitting) {
       return
     }
 
     const newTransaction: Transaction = {
       id: transaction?.id || uuidv4(),
-      amount: Number(amount),
-      date: date as Date,
+      amount: amount !== "" && !isNaN(parseFloat(amount)) ? parseFloat(amount) : 0, // Ensure valid amount
+      date: date && !isNaN(date.getTime()) ? date.toISOString() : new Date().toISOString(), // Ensure valid date
       description,
     }
 
-    onSubmit(newTransaction)
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/transactions', {
+        method: transaction ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTransaction),
+      })
+
+      if (!response.ok) {
+        throw new Error(transaction ? 'Failed to update transaction' : 'Failed to create transaction')
+      }
+
+      const savedTransaction = await response.json()
+      const sanitizedTransaction = {
+        ...savedTransaction.transaction, // Use the transaction object from the API response
+        date: savedTransaction.transaction.date && !isNaN(new Date(savedTransaction.transaction.date).getTime())
+          ? new Date(savedTransaction.transaction.date)
+          : new Date(), // Ensure valid date
+        amount: savedTransaction.transaction.amount !== undefined && savedTransaction.transaction.amount !== null
+          ? parseFloat(savedTransaction.transaction.amount.toString())
+          : 0, // Ensure valid amount
+      }
+      onSubmit(sanitizedTransaction) // Pass the sanitized transaction to the parent
+      onCancel() // Close the form after successful submission
+    } catch (error) {
+      console.error('Error saving transaction:', error)
+      // Optionally add error handling UI here
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -134,7 +166,9 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit">{transaction ? "Update" : "Add"} Transaction</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {transaction ? "Update" : "Add"} Transaction
+            </Button>
           </CardFooter>
         </form>
       </Card>

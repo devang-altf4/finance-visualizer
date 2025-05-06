@@ -36,10 +36,18 @@ export default function TransactionList({ transactions, onEdit, onDelete }: Tran
             </TableHeader>
             <TableBody>
               {sortedTransactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell className="whitespace-nowrap">{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
+                <TableRow key={transaction.id || Math.random().toString()}>
+                  <TableCell className="whitespace-nowrap">
+                    {transaction.date && !isNaN(new Date(transaction.date).getTime())
+                      ? format(new Date(transaction.date), "MMM d, yyyy")
+                      : "Invalid Date"}
+                  </TableCell>
                   <TableCell className="max-w-[200px] truncate">{transaction.description}</TableCell>
-                  <TableCell className="text-right whitespace-nowrap">${transaction.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
+                    ${transaction.amount !== undefined && transaction.amount !== null
+                      ? parseFloat(transaction.amount.toString()).toFixed(2)
+                      : "0.00"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => onEdit(transaction)}>
