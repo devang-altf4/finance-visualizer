@@ -11,6 +11,7 @@ import CategoryPieChart from "@/components/category-pie-chart"
 import DashboardSummary from "@/components/dashboard-summary"
 import BudgetForm from "@/components/budget-form"
 import BudgetComparisonChart from "@/components/budget-comparison-chart"
+import SpendingInsights from "@/components/spending-insights"
 import type { Transaction, Budget } from "@/lib/types"
 
 export default function Home() {
@@ -132,6 +133,11 @@ export default function Home() {
       {/* Dashboard Summary */}
       <div className="mb-6">
         <DashboardSummary transactions={transactions} />
+      </div>
+
+      {/* Spending Insights Component */}
+      <div className="mb-6">
+        <SpendingInsights transactions={transactions} budgets={budgets} />
       </div>
 
       <div className="flex flex-col gap-4">
