@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import TransactionForm from "@/components/transaction-form"
 import TransactionList from "@/components/transaction-list"
 import ExpensesChart from "@/components/expenses-chart"
@@ -115,85 +115,112 @@ export default function Home() {
     }
   }
 
+  // Calculate total spent for header
+  const totalSpent = transactions.reduce((sum, t) => sum + (typeof t.amount === "number" ? t.amount : 0), 0)
+
   return (
-    <main className="container mx-auto p-4 max-w-[1200px]">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Finance Tracker</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsBudgetFormOpen(true)}>
-            Set Budget
-          </Button>
-          <Button onClick={() => setIsFormOpen(true)} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
+    <div className="min-h-screen bg-[#f6f9fc]">
+      {/* Animated Gradient Header */}
+      <div className="w-[98vw] max-w-[1700px] mx-auto mt-8 mb-10">
+        <div
+          className="rounded-2xl shadow-lg px-14 py-6 min-h-[80px] flex items-center animate-fade-in"
+          style={{
+            background: "linear-gradient(120deg, #ff6a00, #ee0979, #23a6d5, #6d8ce3, #43e97b, #38f9d7)",
+            backgroundSize: "200% 200%",
+            animation: "gradientMove 6s ease-in-out infinite"
+          }}
+        >
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-1 drop-shadow-lg">
+              Finance Tracker
+            </h1>
+            {/* Optionally add a subtitle or date here */}
+          </div>
+          <div className="text-right">
+            <div className="text-white/90 text-base font-medium mb-1 drop-shadow">
+              Total Spent
+            </div>
+            <div className="text-4xl font-extrabold text-white drop-shadow-lg">
+              ${totalSpent.toFixed(2)}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Dashboard Summary */}
-      <div className="mb-6">
-        <DashboardSummary transactions={transactions} />
-      </div>
+      <style jsx global>{`
+        @keyframes gradientMove {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-fade-in {
+          animation: fadeIn 1.2s ease;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-24px);}
+          to { opacity: 1; transform: translateY(0);}
+        }
+      `}</style>
 
-      {/* Spending Insights Component */}
-      <div className="mb-6">
-        <SpendingInsights transactions={transactions} budgets={budgets} />
-      </div>
+      <main className="max-w-6xl mx-auto px-4">
+        {/* Your Finances Section */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">Your Finances</h2>
+          <div className="flex gap-2 mt-2 md:mt-0">
+            <Button variant="outline" className="bg-white border border-gray-200 text-gray-800 hover:bg-gray-100" onClick={() => setIsBudgetFormOpen(true)}>
+              Set Budget
+            </Button>
+            <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setIsFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Transaction
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Budget vs. Actual Chart */}
+          <Card className="col-span-2 rounded-xl shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle>Budget vs. Actual Spending - May 2025</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[260px]">
+              <BudgetComparisonChart transactions={transactions} budgets={budgets} />
+            </CardContent>
+          </Card>
+          {/* Spending Insights */}
+          <div>
+            <SpendingInsights transactions={transactions} budgets={budgets} />
+          </div>
+        </div>
 
-      <div className="flex flex-col gap-4">
-        {/* Budget vs. Actual Chart */}
-        <Card className="w-full border rounded-lg overflow-hidden">
-          <CardHeader className="pb-2 border-b">
-            <CardTitle>Budget vs. Actual</CardTitle>
-            <CardDescription>Compare your budgets with actual spending.</CardDescription>
+        {/* Monthly Expenses Section */}
+        <Card className="mb-8 rounded-xl shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle>Monthly Expenses</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] p-4">
-            <BudgetComparisonChart transactions={transactions} budgets={budgets} />
+          <CardContent className="h-[220px] overflow-x-auto">
+            <div className="min-w-[320px] w-full h-full">
+              <ExpensesChart transactions={transactions} />
+            </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Monthly Expenses Chart */}
-          <Card className="w-full border rounded-lg overflow-hidden">
-            <CardHeader className="pb-2 border-b">
-              <CardTitle>Monthly Expenses</CardTitle>
-              <CardDescription>Your expenses broken down by month.</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px] p-4">
-              <ExpensesChart transactions={transactions} />
-            </CardContent>
-          </Card>
-
-          {/* Category Breakdown */}
-          <Card className="w-full border rounded-lg overflow-hidden">
-            <CardHeader className="pb-2 border-b">
-              <CardTitle>Category Breakdown</CardTitle>
-              <CardDescription>Your expenses by category.</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px] p-4">
-              <CategoryPieChart transactions={transactions} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Transactions List */}
-        <Card className="w-full border rounded-lg overflow-hidden">
-          <CardHeader className="pb-2 border-b">
+        {/* Recent Transactions Table */}
+        <Card className="rounded-xl shadow-sm">
+          <CardHeader className="pb-2">
             <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>View and manage your recent transactions.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px] overflow-auto">
+          <CardContent className="overflow-x-auto">
             <TransactionList transactions={transactions} onEdit={openEditForm} onDelete={handleDeleteTransaction} />
           </CardContent>
         </Card>
 
+        {/* Modals */}
         {isBudgetFormOpen && (
           <BudgetForm
             onSubmit={handleBudgetSubmit}
             onCancel={() => setIsBudgetFormOpen(false)}
           />
         )}
-
         {(isFormOpen || editingTransaction) && (
           <TransactionForm
             onSubmit={handleTransactionSubmit}
@@ -204,7 +231,7 @@ export default function Home() {
             transaction={editingTransaction}
           />
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
