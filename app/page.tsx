@@ -35,8 +35,8 @@ export default function Home() {
         const data = await response.json()
         const sanitizedTransactions = data.transactions.map((t: Transaction) => ({
           ...t,
-          date: t.date && !isNaN(new Date(t.date).getTime()) ? new Date(t.date) : null, // Ensure valid date or null
-          amount: t.amount !== undefined && t.amount !== null ? parseFloat(t.amount.toString()) : 0, // Ensure valid amount
+          date: t.date && !isNaN(new Date(t.date).getTime()) ? new Date(t.date) : null,
+          amount: t.amount !== undefined && t.amount !== null ? parseFloat(t.amount.toString()) : 0,
         }))
         setTransactions(sanitizedTransactions)
       } catch (error) {
@@ -44,7 +44,24 @@ export default function Home() {
       }
     }
 
+    const fetchBudgets = async () => {
+      try {
+        const response = await fetch('/api/budgets')
+        const data = await response.json()
+        console.log('Fetched budgets response:', data) // Debug log
+        if (!Array.isArray(data.budgets)) {
+          console.error('Expected budgets array, got:', data)
+          setBudgets([])
+          return
+        }
+        setBudgets(data.budgets)
+      } catch (error) {
+        console.error('Error fetching budgets:', error)
+      }
+    }
+
     fetchTransactions()
+    fetchBudgets()
   }, [])
 
   const handleTransactionSubmit = (transaction: Transaction) => {
@@ -106,16 +123,20 @@ export default function Home() {
 
   const handleBudgetSubmit = async (budget: Budget) => {
     try {
-      const updatedBudgets = [...budgets]
-      const existingIndex = updatedBudgets.findIndex(b => b.category === budget.category)
-      
-      if (existingIndex >= 0) {
-        updatedBudgets[existingIndex] = budget
-      } else {
-        updatedBudgets.push(budget)
+      console.log('Submitting budget:', budget) // Debug log
+      const response = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(budget),
+      })
+      const data = await response.json()
+      console.log('Budget submit response:', data) // Debug log
+      if (!response.ok) throw new Error('Failed to save budget')
+      if (!Array.isArray(data.budgets)) {
+        console.error('Expected budgets array in response, got:', data)
+        return
       }
-      
-      setBudgets(updatedBudgets)
+      setBudgets(data.budgets)
       setIsBudgetFormOpen(false)
     } catch (error) {
       console.error('Error saving budget:', error)
@@ -124,6 +145,24 @@ export default function Home() {
 
   // Calculate total spent for header
   const totalSpent = transactions.reduce((sum, t) => sum + (typeof t.amount === "number" ? t.amount : 0), 0)
+
+  // Enhanced debug logging
+  useEffect(() => {
+    console.log('Current state:', {
+      budgetsLength: budgets.length,
+      transactionsLength: transactions.length,
+      budgets,
+      transactions,
+    })
+  }, [budgets, transactions])
+
+  // Debug: Log budgets and transactions before rendering the chart
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("Budgets for chart:", budgets)
+    // eslint-disable-next-line no-console
+    console.log("Transactions for chart:", transactions)
+  }, [budgets, transactions])
 
   return (
     <div className="min-h-screen bg-[#f6f9fc] font-inter">
@@ -211,7 +250,18 @@ export default function Home() {
               <CardTitle className="font-rubik">Budget vs. Actual Spending - May 2025</CardTitle>
             </CardHeader>
             <CardContent className="h-[260px]">
-              <BudgetComparisonChart transactions={transactions} budgets={budgets} />
+              {(budgets.length > 0 && transactions.length > 0) ? (
+                <BudgetComparisonChart
+                  transactions={transactions}
+                  budgets={budgets}
+                />
+              ) : (
+                <div className="text-gray-500 text-center py-12">
+                  {budgets.length === 0 && transactions.length === 0 && "Add budgets and transactions to see the chart."}
+                  {budgets.length === 0 && transactions.length > 0 && "Add a budget to see the chart."}
+                  {budgets.length > 0 && transactions.length === 0 && "Add a transaction to see the chart."}
+                </div>
+              )}
             </CardContent>
           </Card>
           {/* Spending Insights */}
