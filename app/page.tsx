@@ -129,13 +129,13 @@ export default function Home() {
     <div className="min-h-screen bg-[#f6f9fc] font-inter">
       {/* Animated Gradient Header */}
       <motion.div
-        className="w-[98vw] max-w-[1700px] mx-auto mt-8 mb-10"
+        className="w-[98vw] max-w-[1700px] mx-auto mb-10" // removed mt-8
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
       >
         <motion.div
-          className="rounded-2xl shadow-lg px-14 py-6 min-h-[80px] flex items-center animate-fade-in"
+          className=" shadow-lg px-14 py-6 min-h-[80px] flex items-center animate-fade-in"
           style={{
             background: "linear-gradient(120deg, #ff6a00, #ee0979, #23a6d5, #6d8ce3, #43e97b, #38f9d7)",
             backgroundSize: "200% 200%",
