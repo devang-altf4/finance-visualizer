@@ -5,6 +5,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Transaction } from "@/lib/types"
+import { getCategoryById } from "@/lib/categories"
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -30,6 +31,7 @@ export default function TransactionList({ transactions, onEdit, onDelete }: Tran
               <TableRow>
                 <TableHead className="w-[100px]">Date</TableHead>
                 <TableHead className="min-w-[120px]">Description</TableHead>
+                <TableHead className="w-[100px]">Category</TableHead>
                 <TableHead className="text-right w-[100px]">Amount</TableHead>
                 <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
@@ -43,6 +45,17 @@ export default function TransactionList({ transactions, onEdit, onDelete }: Tran
                       : "Invalid Date"}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">{transaction.description}</TableCell>
+                  <TableCell>
+                    {transaction.category && (
+                      <div className="flex items-center">
+                        <div 
+                          className="w-2 h-2 rounded-full mr-2" 
+                          style={{ backgroundColor: getCategoryById(transaction.category).color }}
+                        ></div>
+                        {getCategoryById(transaction.category).name}
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     ${transaction.amount !== undefined && transaction.amount !== null
                       ? parseFloat(transaction.amount.toString()).toFixed(2)

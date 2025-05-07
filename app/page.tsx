@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import TransactionForm from "@/components/transaction-form"
 import TransactionList from "@/components/transaction-list"
 import ExpensesChart from "@/components/expenses-chart"
+import CategoryPieChart from "@/components/category-pie-chart"
+import DashboardSummary from "@/components/dashboard-summary"
 import type { Transaction } from "@/lib/types"
 
 export default function Home() {
@@ -100,22 +102,40 @@ export default function Home() {
         </Button>
       </div>
 
+      {/* Dashboard Summary */}
+      <div className="mb-6">
+        <DashboardSummary transactions={transactions} />
+      </div>
+
       <div className="flex flex-col gap-4">
-        {/* Monthly Expenses Chart */}
-        <Card className="w-full border rounded-lg overflow-hidden">
-          <CardHeader className="pb-2 border-b">
-            <CardTitle>Monthly Expenses</CardTitle>
-            <CardDescription>Your expenses broken down by month.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px] p-4">
-            <ExpensesChart transactions={transactions} />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Monthly Expenses Chart */}
+          <Card className="w-full border rounded-lg overflow-hidden">
+            <CardHeader className="pb-2 border-b">
+              <CardTitle>Monthly Expenses</CardTitle>
+              <CardDescription>Your expenses broken down by month.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] p-4">
+              <ExpensesChart transactions={transactions} />
+            </CardContent>
+          </Card>
+
+          {/* Category Breakdown */}
+          <Card className="w-full border rounded-lg overflow-hidden">
+            <CardHeader className="pb-2 border-b">
+              <CardTitle>Category Breakdown</CardTitle>
+              <CardDescription>Your expenses by category.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] p-4">
+              <CategoryPieChart transactions={transactions} />
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Transactions List */}
         <Card className="w-full border rounded-lg overflow-hidden">
           <CardHeader className="pb-2 border-b">
-            <CardTitle>Transactions</CardTitle>
+            <CardTitle>Recent Transactions</CardTitle>
             <CardDescription>View and manage your recent transactions.</CardDescription>
           </CardHeader>
           <CardContent className="h-[400px] overflow-auto">

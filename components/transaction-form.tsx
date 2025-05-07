@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import type { Transaction } from "@/lib/types"
+import { categories } from "@/lib/categories"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface TransactionFormProps {
   onSubmit: (transaction: Transaction) => void
@@ -24,10 +26,12 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
   const [amount, setAmount] = useState(transaction?.amount.toString() || "")
   const [date, setDate] = useState<Date | undefined>(transaction?.date || new Date())
   const [description, setDescription] = useState(transaction?.description || "")
+  const [category, setCategory] = useState(transaction?.category || "other")
   const [errors, setErrors] = useState({
     amount: "",
     date: "",
     description: "",
+    category: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -45,6 +49,7 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
       amount: "",
       date: "",
       description: "",
+      category: "",
     }
 
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -62,6 +67,11 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
       valid = false
     }
 
+    if (!category) {
+      newErrors.category = "Please select a category"
+      valid = false
+    }
+
     setErrors(newErrors)
     return valid
   }
@@ -75,9 +85,10 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
 
     const newTransaction: Transaction = {
       id: transaction?.id || uuidv4(),
-      amount: amount !== "" && !isNaN(parseFloat(amount)) ? parseFloat(amount) : 0, // Ensure valid amount
-      date: date && !isNaN(date.getTime()) ? date.toISOString() : new Date().toISOString(), // Ensure valid date
+      amount: amount !== "" && !isNaN(parseFloat(amount)) ? parseFloat(amount) : 0,
+      date: date && !isNaN(date.getTime()) ? date : new Date(),
       description,
+      category,
     }
 
     setIsSubmitting(true)
@@ -160,6 +171,26 @@ export default function TransactionForm({ onSubmit, onCancel, transaction }: Tra
                 onChange={(e) => setDescription(e.target.value)}
               />
               {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: cat.color }}></div>
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
