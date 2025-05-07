@@ -9,12 +9,16 @@ import TransactionList from "@/components/transaction-list"
 import ExpensesChart from "@/components/expenses-chart"
 import CategoryPieChart from "@/components/category-pie-chart"
 import DashboardSummary from "@/components/dashboard-summary"
-import type { Transaction } from "@/lib/types"
+import BudgetForm from "@/components/budget-form"
+import BudgetComparisonChart from "@/components/budget-comparison-chart"
+import type { Transaction, Budget } from "@/lib/types"
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [budgets, setBudgets] = useState<Budget[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [isBudgetFormOpen, setIsBudgetFormOpen] = useState(false)
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -92,14 +96,37 @@ export default function Home() {
     setEditingTransaction(transaction)
   }
 
+  const handleBudgetSubmit = async (budget: Budget) => {
+    try {
+      const updatedBudgets = [...budgets]
+      const existingIndex = updatedBudgets.findIndex(b => b.category === budget.category)
+      
+      if (existingIndex >= 0) {
+        updatedBudgets[existingIndex] = budget
+      } else {
+        updatedBudgets.push(budget)
+      }
+      
+      setBudgets(updatedBudgets)
+      setIsBudgetFormOpen(false)
+    } catch (error) {
+      console.error('Error saving budget:', error)
+    }
+  }
+
   return (
     <main className="container mx-auto p-4 max-w-[1200px]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Finance Tracker</h1>
-        <Button onClick={() => setIsFormOpen(true)} variant="outline">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Transaction
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBudgetFormOpen(true)}>
+            Set Budget
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)} variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Transaction
+          </Button>
+        </div>
       </div>
 
       {/* Dashboard Summary */}
@@ -108,6 +135,17 @@ export default function Home() {
       </div>
 
       <div className="flex flex-col gap-4">
+        {/* Budget vs. Actual Chart */}
+        <Card className="w-full border rounded-lg overflow-hidden">
+          <CardHeader className="pb-2 border-b">
+            <CardTitle>Budget vs. Actual</CardTitle>
+            <CardDescription>Compare your budgets with actual spending.</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px] p-4">
+            <BudgetComparisonChart transactions={transactions} budgets={budgets} />
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Monthly Expenses Chart */}
           <Card className="w-full border rounded-lg overflow-hidden">
@@ -142,18 +180,25 @@ export default function Home() {
             <TransactionList transactions={transactions} onEdit={openEditForm} onDelete={handleDeleteTransaction} />
           </CardContent>
         </Card>
-      </div>
 
-      {(isFormOpen || editingTransaction) && (
-        <TransactionForm
-          onSubmit={handleTransactionSubmit}
-          onCancel={() => {
-            setIsFormOpen(false)
-            setEditingTransaction(null)
-          }}
-          transaction={editingTransaction}
-        />
-      )}
+        {isBudgetFormOpen && (
+          <BudgetForm
+            onSubmit={handleBudgetSubmit}
+            onCancel={() => setIsBudgetFormOpen(false)}
+          />
+        )}
+
+        {(isFormOpen || editingTransaction) && (
+          <TransactionForm
+            onSubmit={handleTransactionSubmit}
+            onCancel={() => {
+              setIsFormOpen(false)
+              setEditingTransaction(null)
+            }}
+            transaction={editingTransaction}
+          />
+        )}
+      </div>
     </main>
   )
 }
